@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <title>ADMIN PANEL | 1M LEGACY</title>
+    <style>
+        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; padding: 20px; }
+        h1 { border-bottom: 2px solid #0f0; padding-bottom: 10px; text-shadow: 0 0 10px #0f0; }
+        .request-card { border: 1px solid #333; padding: 20px; margin: 15px 0; display: flex; justify-content: space-between; align-items: center; background: #050505; border-radius: 8px; }
+        .info { line-height: 1.6; }
+        img { width: 60px; height: 60px; border: 1px solid #0f0; object-fit: cover; margin-top: 10px; }
+        button { background: #0f0; color: #000; border: none; padding: 12px 25px; cursor: pointer; font-weight: bold; font-size: 14px; border-radius: 4px; transition: 0.3s; }
+        button:hover { background: #fff; box-shadow: 0 0 15px #0f0; }
+        #no-request { color: #888; text-align: center; margin-top: 50px; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h1>ADMIN CONTROL PANEL - 1M LEGACY</h1>
+    <div id="requests">
+        <p id="no-request">নতুন কোনো আবেদন নেই...</p>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <script>
+        // আপনার ফায়ারবেস কনফিগ (একই কনফিগ এখানেও ব্যবহার করা হয়েছে)
+        const firebaseConfig = {
+          apiKey: "AIzaSyAu60S1HSCBT4W2bMs80EJgIQqeuDAbhuU",
+          authDomain: "mybillboard-c0ee4.firebaseapp.com",
+          databaseURL: "https://mybillboard-c0ee4-default-rtdb.firebaseio.com/",
+          projectId: "mybillboard-c0ee4",
+          storageBucket: "mybillboard-c0ee4.firebasestorage.app",
+          messagingSenderId: "768914352520",
+          appId: "1:768914352520:web:6c63e367d50fbdcec2b23d"
+        };
+
+        // Firebase শুরু
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // ডাটাবেস থেকে পেন্ডিং রিকোয়েস্ট দেখা
+        db.ref('pixels').on('value', (snapshot) => {
+            const list = document.getElementById('requests');
+            list.innerHTML = '';
+            let hasPending = false;
+
+            snapshot.forEach((child) => {
+                const val = child.val();
+                if(val.status === 'pending') {
+                    hasPending = true;
+                    const div = document.createElement('div');
+                    div.className = 'request-card';
+                    div.innerHTML = `
+                        <div class="info">
+                            <strong>SPOT ID: ${child.key}</strong><br>
+                            লিঙ্ক: <a href="${val.link}" target="_blank" style="color:#0f0;">${val.link}</a><br>
+                            লোগো প্রিভিউ:<br>
+                            <img src="${val.logo}" onerror="this.src='https://via.placeholder.com/50?text=Error'">
+                        </div>
+                        <button onclick="approve('${child.key}')">APPROVE (Live)</button>
+                    `;
+                    list.appendChild(div);
+                }
+            });
+
+            if(!hasPending) {
+                list.innerHTML = '<p id="no-request">নতুন কোনো আবেদন নেই...</p>';
+            }
+        });
+
+        // পিক্সেল অ্যাপ্রুভ করার ফাংশন
+        function approve(id) {
+            if(confirm("আপনি কি নিশ্চিত যে এই পিক্সেলটি ওয়েবসাইটে দেখাতে চান?")) {
+                db.ref('pixels/' + id).update({ status: 'approved' })
+                .then(() => alert("পিক্সেল সফলভাবে লাইভ করা হয়েছে!"))
+                .catch(err => alert("ত্রুটি: " + err.message));
+            }
+        }
+    </script>
+</body>
+</html>
